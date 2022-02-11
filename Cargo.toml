@@ -1,0 +1,12 @@
+[package]
+name = "snake-piston"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+piston = "0.53"
+piston2d-graphics = "0.41"
+pistoncore-glutin_window = "0.69"
+piston2d-opengl_graphics = "0.79"
