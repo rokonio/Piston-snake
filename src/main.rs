@@ -11,7 +11,7 @@ type Color = [f32; 4];
 
 const BODY_COLOR: Color = [0.8, 0.8, 0.8, 1.0];
 const BACKGROUND_COLOR: Color = [0.0, 0.0, 0.0, 1.0];
-// const FOOD_COLOR: Color = [1.0, 0.0, 0.0, 1.0];
+const FOOD_COLOR: Color = [1.0, 0.0, 0.0, 1.0];
 
 #[derive(PartialEq, Debug)]
 enum Direction {
@@ -52,6 +52,7 @@ struct App {
     growing: bool,
     snake_update_time: f64,
     dir_changed: bool,
+    food_position: (u8, u8),
 }
 
 impl App {
@@ -67,6 +68,8 @@ impl App {
                     let transform = c.transform.trans(x as f64 * height, y as f64 * width);
                     if self.body.contains(&(x, y)) {
                         rectangle(BODY_COLOR, rec, transform, gl);
+                    } else if (x, y) == self.food_position {
+                        rectangle(FOOD_COLOR, rec, transform, gl);
                     } else {
                         rectangle(BACKGROUND_COLOR, rec, transform, gl);
                     }
@@ -124,19 +127,24 @@ impl App {
         }
     }
     pub fn new(gl: GlGraphics, grid_size: (u8, u8)) -> Self {
+        let mut a = VecDeque::new();
+        let center = (grid_size.0 / 2, grid_size.1 / 2);
+        a.push_back(center);
+        let mut food_position = center;
+        while food_position == center {
+            food_position = (fastrand::u8(0..grid_size.0), fastrand::u8(0..grid_size.1));
+        }
+
         Self {
             gl,
-            body: {
-                let mut a = VecDeque::new();
-                a.push_back((grid_size.0 / 2, grid_size.1 / 2));
-                a
-            },
+            body: a,
             dir: Direction::None,
             snake_last_move: 0.0,
             grid_size,
             growing: false,
             snake_update_time: 0.4,
             dir_changed: false,
+            food_position,
         }
     }
 }
