@@ -115,6 +115,10 @@ impl App {
                 #[allow(unreachable_code)]
                 Direction::None => next_pos = unreachable!(),
             }
+            if next_pos == self.food_position {
+                self.generate_food();
+                self.growing = true;
+            }
             if !self.growing {
                 self.body.pop_front();
             } else {
@@ -126,6 +130,7 @@ impl App {
             self.body.push_back(next_pos);
         }
     }
+
     pub fn new(gl: GlGraphics, grid_size: (u8, u8)) -> Self {
         let mut a = VecDeque::new();
         let center = (grid_size.0 / 2, grid_size.1 / 2);
@@ -142,10 +147,21 @@ impl App {
             snake_last_move: 0.0,
             grid_size,
             growing: false,
-            snake_update_time: 0.4,
+            snake_update_time: 0.25,
             dir_changed: false,
             food_position,
         }
+    }
+
+    pub fn generate_food(&mut self) {
+        let mut food_pos = *self.body.front().unwrap();
+        while self.body.contains(&food_pos) {
+            food_pos = (
+                fastrand::u8(0..self.grid_size.0),
+                fastrand::u8(0..self.grid_size.1),
+            );
+        }
+        self.food_position = food_pos;
     }
 }
 
