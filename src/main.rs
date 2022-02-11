@@ -122,7 +122,6 @@ impl App {
             if next_pos == self.food_position {
                 self.generate_new_food();
                 self.growing += self.growth_rate;
-                println!("Score: {}", self.body.len());
             }
             if self.growing == 0 {
                 self.body.pop_front();
@@ -238,6 +237,9 @@ fn main() {
         }
         if should_continue {
             should_continue = false;
+            let animation_speed = 0.6;
+            let mut dot_animation = 0.0;
+            let mut ending = ".";
             while let Some(e) = event.next(&mut window) {
                 if let Some(args) = e.render_args() {
                     app.gl.draw(args.viewport(), |c, gl| {
@@ -256,7 +258,7 @@ fn main() {
                             .unwrap();
                         text::Text::new_color(BODY_COLOR, (args.viewport().rect[2] / 23) as u32)
                             .draw(
-                                "Press Space to play a new game or esc to exit...",
+                                &format!("Your score was {}", app.body.len() - 1),
                                 &mut glyph_cache,
                                 &DrawState::default(),
                                 c.transform
@@ -264,7 +266,30 @@ fn main() {
                                 gl,
                             )
                             .unwrap();
+                        text::Text::new_color(BODY_COLOR, (args.viewport().rect[2] / 23) as u32)
+                            .draw(
+                                &("Press Space to play a new game or esc to exit".to_owned()
+                                    + ending),
+                                &mut glyph_cache,
+                                &DrawState::default(),
+                                c.transform
+                                    .trans(10.0, (args.viewport().rect[3] as f32 / 1.6) as f64),
+                                gl,
+                            )
+                            .unwrap();
                     });
+                }
+                if let Some(args) = e.update_args() {
+                    dot_animation += args.dt;
+                    if dot_animation >= animation_speed * 3.0 {
+                        dot_animation %= animation_speed;
+                    } else if dot_animation >= animation_speed * 2.0 {
+                        ending = "...";
+                    } else if dot_animation >= animation_speed {
+                        ending = "..";
+                    } else if dot_animation < animation_speed {
+                        ending = "."
+                    }
                 }
                 if let Some(Button::Keyboard(Key::Space)) = e.press_args() {
                     should_continue = true;
