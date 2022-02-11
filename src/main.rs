@@ -48,9 +48,8 @@ struct App {
     dir: Direction,
     // The time since the snake moved for the last time.
     snake_last_move: f64,
-    // TODO: change that to an interger
-    growing: bool,
-    snake_update_time: f64,
+    growing: u32,
+    tick_rate: f64,
     dir_changed: bool,
     food_position: (u8, u8),
 }
@@ -79,8 +78,8 @@ impl App {
     }
     pub fn update(&mut self, args: &UpdateArgs) {
         self.snake_last_move += args.dt;
-        if self.snake_last_move >= self.snake_update_time {
-            self.snake_last_move %= self.snake_update_time;
+        if self.snake_last_move >= self.tick_rate {
+            self.snake_last_move %= self.tick_rate;
             self.dir_changed = false;
             let head = *self.body.back().unwrap();
             if let Direction::None = self.dir {
@@ -117,12 +116,13 @@ impl App {
             }
             if next_pos == self.food_position {
                 self.generate_food();
-                self.growing = true;
+                self.growing += 3;
+                println!("Score: {}", self.body.len());
             }
-            if !self.growing {
+            if self.growing == 0 {
                 self.body.pop_front();
             } else {
-                self.growing = false;
+                self.growing -= 1;
             }
             if self.body.contains(&next_pos) {
                 panic!("Ran into own tail");
@@ -131,7 +131,7 @@ impl App {
         }
     }
 
-    pub fn new(gl: GlGraphics, grid_size: (u8, u8)) -> Self {
+    pub fn new(gl: GlGraphics, grid_size: (u8, u8), tick_rate: f64) -> Self {
         let mut a = VecDeque::new();
         let center = (grid_size.0 / 2, grid_size.1 / 2);
         a.push_back(center);
@@ -146,8 +146,8 @@ impl App {
             dir: Direction::None,
             snake_last_move: 0.0,
             grid_size,
-            growing: false,
-            snake_update_time: 0.25,
+            growing: 4,
+            tick_rate,
             dir_changed: false,
             food_position,
         }
@@ -173,7 +173,7 @@ fn main() {
         .build()
         .unwrap();
 
-    let mut app = App::new(GlGraphics::new(open_gl), (16, 16));
+    let mut app = App::new(GlGraphics::new(open_gl), (32, 32), 1.0 / 10.0);
 
     let mut event = Events::new(EventSettings::new());
     while let Some(e) = event.next(&mut window) {
@@ -211,7 +211,7 @@ fn main() {
                 }
                 #[cfg(debug_assertions)]
                 Key::Space => {
-                    app.growing = true;
+                    app.growing += 1;
                     app.dir_changed = true;
                 }
                 _ => (),
