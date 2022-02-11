@@ -8,6 +8,7 @@ edition = "2021"
 [dependencies]
 piston = "0.53"
 piston2d-graphics = "0.41"
-pistoncore-glutin_window = "0.69"
+# pistoncore-glutin_window = "0.69"
+piston_window = "0.121"
 piston2d-opengl_graphics = "0.79"
 fastrand = "1.7"
