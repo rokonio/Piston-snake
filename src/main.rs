@@ -11,7 +11,7 @@ type Color = [f32; 4];
 
 const BODY_COLOR: Color = [0.8, 0.8, 0.8, 1.0];
 const BACKGROUND_COLOR: Color = [0.0, 0.0, 0.0, 1.0];
-const FOOD_COLOR: Color = [1.0, 0.0, 0.0, 1.0];
+// const FOOD_COLOR: Color = [1.0, 0.0, 0.0, 1.0];
 
 #[derive(PartialEq, Debug)]
 enum Direction {
@@ -48,6 +48,7 @@ struct App {
     dir: Direction,
     // The time since the snake moved for the last time.
     snake_last_move: f64,
+    // TODO: change that to an interger
     growing: bool,
     snake_update_time: f64,
     dir_changed: bool,
@@ -76,72 +77,50 @@ impl App {
     pub fn update(&mut self, args: &UpdateArgs) {
         self.snake_last_move += args.dt;
         if self.snake_last_move >= self.snake_update_time {
+            self.snake_last_move %= self.snake_update_time;
+            self.dir_changed = false;
             let head = *self.body.back().unwrap();
+            if let Direction::None = self.dir {
+                return;
+            }
+            let next_pos;
             match self.dir {
                 Direction::Up => {
+                    next_pos = (head.0, head.1 - 1);
                     if head.1 == 0 {
                         panic!("Cannot move up more");
                     }
-                    if !self.growing {
-                        self.body.pop_front();
-                    } else {
-                        self.growing = false;
-                    }
-                    let next_pos = (head.0, head.1 - 1);
-                    if self.body.contains(&next_pos) {
-                        panic!("Ran into own tail");
-                    }
-                    self.body.push_back(next_pos);
                 }
                 Direction::Down => {
-                    if head.1 + 1 >= self.grid_size.1 {
+                    next_pos = (head.0, head.1 + 1);
+                    if next_pos.1 >= self.grid_size.1 {
                         panic!("Cannot go down more");
                     }
-                    if !self.growing {
-                        self.body.pop_front();
-                    } else {
-                        self.growing = false;
-                    }
-                    let next_pos = (head.0, head.1 + 1);
-                    if self.body.contains(&next_pos) {
-                        panic!("Ran into own tail");
-                    }
-                    self.body.push_back(next_pos);
                 }
                 Direction::Left => {
+                    next_pos = (head.0 - 1, head.1);
                     if head.0 == 0 {
                         panic!("Cannot go left more");
                     }
-                    if !self.growing {
-                        self.body.pop_front();
-                    } else {
-                        self.growing = false;
-                    }
-                    let next_pos = (head.0 - 1, head.1);
-                    if self.body.contains(&next_pos) {
-                        panic!("Ran into own tail");
-                    }
-                    self.body.push_back(next_pos);
                 }
                 Direction::Right => {
-                    if head.0 + 1 >= self.grid_size.0 {
+                    next_pos = (head.0 + 1, head.1);
+                    if next_pos.0 == self.grid_size.0 {
                         panic!("Cannot go right more");
                     }
-                    if !self.growing {
-                        self.body.pop_front();
-                    } else {
-                        self.growing = false;
-                    }
-                    let next_pos = (head.0 + 1, head.1);
-                    if self.body.contains(&next_pos) {
-                        panic!("Ran into own tail");
-                    }
-                    self.body.push_back(next_pos);
                 }
-                Direction::None => {}
+                #[allow(unreachable_code)]
+                Direction::None => next_pos = unreachable!(),
             }
-            self.snake_last_move %= self.snake_update_time;
-            self.dir_changed = false;
+            if !self.growing {
+                self.body.pop_front();
+            } else {
+                self.growing = false;
+            }
+            if self.body.contains(&next_pos) {
+                panic!("Ran into own tail");
+            }
+            self.body.push_back(next_pos);
         }
     }
     pub fn new(gl: GlGraphics, grid_size: (u8, u8)) -> Self {
@@ -156,7 +135,7 @@ impl App {
             snake_last_move: 0.0,
             grid_size,
             growing: false,
-            snake_update_time: 2.0,
+            snake_update_time: 0.4,
             dir_changed: false,
         }
     }
@@ -206,6 +185,7 @@ fn main() {
                     }
                     app.dir_changed = true;
                 }
+                #[cfg(debug_assertions)]
                 Key::Space => {
                     app.growing = true;
                     app.dir_changed = true;
